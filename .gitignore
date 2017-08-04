@@ -1,0 +1,24 @@
+.DS_Store
+.idea
+
+# Ignore node_modules.
+/node_modules
+
+# Ignore documentation
+/jsdoc
+/docs/api_agent/*.html
+
+# Ignore all logfiles and tempfiles.
+/logs/*.log
+/tmp
+/store/sessions
+npm-debug.log
+
+# Ignore developer's settings files
+config/settings.*.yml
+
+# Ignore coverage results
+/coverage
+
+# Ignore developer data directory
+/data

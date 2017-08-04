@@ -1,0 +1,3 @@
+[submodule "backuprestore/service_fabrik_backup_restore"]
+	path = backuprestore/service_fabrik_backup_restore
+	url = https://github.com/sap/service-fabrik-backup-restore

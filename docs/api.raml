@@ -1,0 +1,154 @@
+#%RAML 0.8
+---
+title: blueprint-service
+baseUri: http://blueprint-service.bosh-lite.com/{version}
+version: v1
+mediaType: application/json, text/plain
+protocols: [ HTTP ]
+
+############################################################
+#                       VERSION API                        #
+############################################################
+
+/info:
+  displayName: Information
+  description: Retrieve information on our service.
+  get:
+    description: Retrieve information on our service.
+    responses:
+      200:
+        description: Information on our service.
+        body:
+          application/json:
+            example: |
+              {
+                "version": "1.0.0"
+              }
+
+############################################################
+#                         FILES API                        #
+############################################################
+
+/files:
+  uriParameters:
+  displayName: Files
+  description: A collection of files in our service.
+  get:
+    description: Retrieve a list of all existing files.
+    responses:
+      200:
+        description: Retrieve all resources compacted in a JSON array.
+        body:
+          application/json:
+            example: |
+              {
+                "total_results": 1,
+                "results": [
+                  {
+                   "name": "dosekohl",
+                   "size": 512,
+                   "file_url": "/{version}/files/{name}"
+                  }
+                ]
+              }
+      401:
+        description: Unauthorized access.
+  /{fileName}:
+    description: Retrieve a specific file using its name.
+    uriParameters:
+      fileName:
+        displayName: Name of the file
+        type: "string"
+    get:
+      description: Retrieve the content of a specific resource that is identified by its filename.
+      responses:
+        200:
+          description: File found and read successfully.
+          body:
+            text/plain:
+              example:
+                This is the content of our file.
+        401:
+          description: Unauthorized access.
+        404:
+          description: A resource with the stated filename was not found.
+    put:
+      description: Create a new file or update the content of a specific file
+      body:
+        text/plain:
+          example: |
+            This is the content of our file.
+      responses:
+        200:
+          description: File exists already and matches the request (content is identical).
+        201:
+          description: File did not exist and was created OR file exists already and its content was updated.
+        401:
+          description: Unauthorized access.
+    delete:
+      description: Delete a single file.
+      responses:
+        200:
+          description: Resource was successfully deleted.
+        401:
+          description: Unauthorized access.
+        404:
+          description: A resource with the stated filename was not found (and therefore not deleted).
+  /metadata:
+    /{fileName}:
+      description: Retrieve a specific file using its name.
+      uriParameters:
+        fileName:
+          displayName: Name of the file
+          type: "string"
+      post:
+        description: Create a new file with parametrized meta data.
+        queryParameters:
+          size:
+            description: Preset size of the new file (in MB) for volume quota tests (if given, a file with SIZE*(10^6) subsequent zeros will be generated).
+            type: integer
+            example: 10
+            required: false
+        responses:
+          201:
+            description: File did not exist and was created.
+          401:
+            description: Unauthorized access.
+          409:
+            description: A file with the given name already exists.
+
+############################################################
+#                         ADMIN API                        #
+############################################################
+
+/admin:
+  uriParameters:
+  displayName: Admin
+  description: Administration resource.
+  /credentials:
+    /{userName}:
+      description: Create or delete user credentials.
+      uriParameters:
+        userName:
+          displayName: Name of the user
+          type: "string"
+      put:
+        description: Create a new user or update the password of a specific user.
+        body:
+          application/json:
+            example: |
+              password=abc
+        responses:
+          201:
+            description: User did not exist and was created OR user exists already and its password was updated.
+          401:
+            description: Unauthorized access.
+      delete:
+        description: Delete a user.
+        responses:
+          200:
+            description: User was successfully deleted.
+          401:
+            description: Unauthorized access.
+          404:
+            description: A user with the stated username was not found (and therefore not deleted).

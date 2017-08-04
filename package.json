@@ -1,0 +1,62 @@
+{
+  "name": "blueprint-service",
+  "version": "1.3.1",
+  "description": "A blueprint service testing and documenting the integration into the Service Fabrik Broker.",
+  "license": "Apache-2.0",
+  "contributors": [
+    "Franzke, Rafael <rafael.franzke@sap.com>",
+    "Koser, Holger <holger.koser@sap.com>",
+    "Lerenc, Vedran <vedran.lerenc@sap.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/SAP/service-fabrik-blueprint-service.git"
+  },
+  "dependencies": {
+    "basic-auth": "^1.0.3",
+    "bluebird": "~3.4.0",
+    "body-parser": "~1.13.2",
+    "crypto": "~0.0.3",
+    "debug": "~2.2.0",
+    "express": "~4.13.1",
+    "js-yaml": "~3.6.1",
+    "lodash": "^4.13.1",
+    "mkdirp": "~0.5.1",
+    "morgan": "^1.6.1",
+    "request-promise": "^3.0.0",
+    "url": "^0.11.0",
+    "winston": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "chai": "^3.5.0",
+    "chai-http": "^2.0.1",
+    "chai-spies": "^0.7.1",
+    "docdash": "^0.3.0",
+    "isparta": "^4.0.0",
+    "js-beautify": "^1.6.3",
+    "jsdoc": "^3.4.0",
+    "jshint": "^2.9.2",
+    "jshint-stylish": "^2.2.0",
+    "mocha": "^2.5.3",
+    "nock": "^8.0.0",
+    "proxyquire": "^1.7.9",
+    "raml2html": "^2.4.0",
+    "rewire": "^2.5.1"
+  },
+  "engines": {
+    "node": ">= 6.9.1"
+  },
+  "scripts": {
+    "start": "node ./server",
+    "agent": "node ./server_agent",
+    "render-api": "raml2html -i docs/api.raml -o docs/api.html",
+    "jsdoc": "jsdoc -c jsdoc.json",
+    "jshint": "jshint --exclude coverage,docs,jsdoc,node_modules  --reporter=node_modules/jshint-stylish .",
+    "jshint-ci": "jshint --exclude coverage,docs,jsdoc,node_modules --reporter=checkstyle .",
+    "test": "_mocha test/",
+    "test-ci": "babel-node ./node_modules/.bin/isparta cover --report cobertura _mocha  -- test/",
+    "test-cov": "babel-node ./node_modules/.bin/isparta cover _mocha -- test/",
+    "jsformat": "js-beautify -r *.js -r lib/*.js -r lib/**/*.js -r test/*.js -r test/**/*.js"
+  }
+}

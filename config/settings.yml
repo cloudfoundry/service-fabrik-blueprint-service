@@ -1,0 +1,43 @@
+---
+paths:
+  files: ./data/files
+  credentials: ./data/credentials
+  logs: ./logs
+  logs_agent: ./logs
+port: 8080
+admin:
+  username: admin
+  password: admin
+agent:
+  username: admin
+  password: admin
+  port: 2718
+  job:
+    name: blueprint_z1
+    index: 0
+  provider:
+    name: openstack
+    username: <redacted>
+    password: <redacted>
+    auth_url: <redacted>
+    user_domain_name: <redacted>
+    tenant_id: <redacted>
+    tenant_name: <redacted>
+    container: <redacted>
+  manifest:
+    jobs:
+    - name: blueprint
+      template: blueprint
+      instances: 1
+      persistent_disk: 1024
+      resource_pool: default
+      networks:
+        - name: blueprint-network
+          static_ips:
+            - 127.0.0.1
+    properties:
+      blueprint:
+        port: 8080
+        admin:
+          username: admin
+          password: admin
