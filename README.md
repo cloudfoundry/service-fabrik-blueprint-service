@@ -8,7 +8,7 @@ As part of the decoupling process in which the services get more and more separa
 
 ## Requirements
 
-- You need to have installed [Node.JS](https://nodejs.org/en/) as well as [NVM](https://www.npmjs.com/package/nvm).
+- You need to have installed [Node.JS](https://nodejs.org/en/) as well as [NVM](https://github.com/creationix/nvm).
  
 ## Download and Installation
 
