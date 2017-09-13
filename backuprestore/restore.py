@@ -160,7 +160,7 @@ def main():
                 iaas_client.exit('Could not create the following directory: {}'.format(
                     '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
             # +-> Copy the Encrypted backups contents to the persistent volume
-	          if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
+            if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
                 if not iaas_client.copy_directory(
                     '{}/blueprint/files/*'.format(DIRECTORY_DOWNLOADS),
                     '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
