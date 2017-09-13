@@ -1,5 +1,6 @@
 import time
 import json
+import os
 from service_fabrik_backup_restore import parse_options, create_iaas_client
 
 
@@ -159,12 +160,12 @@ def main():
                 iaas_client.exit('Could not create the following directory: {}'.format(
                     '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
             # +-> Copy the Encrypted backups contents to the persistent volume
-            if not iaas_client.copy_directory(
+	          if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
+                if not iaas_client.copy_directory(
                     '{}/blueprint/files/*'.format(DIRECTORY_DOWNLOADS),
                     '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
-                iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
+                    iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
                                  .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
-
             # +-> Start the service job
             iaas_client.start_service_job()
 
