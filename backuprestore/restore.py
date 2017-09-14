@@ -166,6 +166,8 @@ def main():
                     '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
                     iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
                                  .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
+            else:
+                iaas_client.logger.info('Skipping copy since backup directory was empty')
             # +-> Start the service job
             iaas_client.start_service_job()
 
