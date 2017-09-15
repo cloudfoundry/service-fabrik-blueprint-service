@@ -14,6 +14,7 @@ def main():
     iaas_client = create_iaas_client(
         'restore', configuration, DIRECTORY_PERSISTENT, [DIRECTORY_DOWNLOADS])
 
+    landscape = configuration['iaas'].title()
     # ------------------------------------------ RESTORE START ---------------------------------------------------------
     backup_guid = configuration['backup_guid']
     instance_id = configuration['instance_id']
@@ -32,14 +33,8 @@ def main():
             iaas_client.exit(
                 'Could not find the persistent volume attached to this instance.')
 
-        # get sanpshot id from service metadata stored in blobstore
-        if not iaas_client.download_from_blobstore('{}/{}'.format(backup_guid, metadata_files_name), metadata_files_path):
-            iaas_client.exit(
-                'Could not download the tarball {} for backup guid {} from pseudo-folder.'.format(metadata_files_name, backup_guid))
-        encrypted_snapshot_id = str(
-            json.load(open(metadata_files_path))['snapshotId'])
 
-        if encrypted_snapshot_id is None:
+        if landscape != 'Aws' and landscape != 'Azure':
             # +-> Create a volume where the downloaded blobs will be stored on
             volume_downloads = iaas_client.create_volume(
                 volume_persistent.size)
@@ -114,7 +109,14 @@ def main():
                 iaas_client.exit(
                     'Could not delete the download volume with id {}.'.format(volume_downloads.id))
 
-        if encrypted_snapshot_id is not None:
+        if landscape == 'Aws' or landscape == 'Azure':
+            # get sanpshot id from service metadata stored in blobstore
+            if not iaas_client.download_from_blobstore('{}/{}'.format(backup_guid, metadata_files_name), metadata_files_path):
+                iaas_client.exit(
+                    'Could not download the tarball {} for backup guid {} from pseudo-folder.'.format(metadata_files_name, backup_guid))
+            encrypted_snapshot_id = str(
+                json.load(open(metadata_files_path))['snapshotId'])
+
             # +-> Create a volume where the downloaded blobs will be stored on
             snapshot_volume = iaas_client.create_volume(
                 volume_persistent.size, encrypted_snapshot_id)
