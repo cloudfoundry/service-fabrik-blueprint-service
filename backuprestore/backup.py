@@ -41,7 +41,7 @@ def main():
                 iaas_client.exit('Could not find the snapshot of the persistent volume {}.'
                                  .format(DIRECTORY_PERSISTENT))
 
-            if landscape != 'Aws' and landscape != 'Azure':
+            if landscape != 'Aws':
                 # +-> Create a volume from this snapshot whose contents will be backed-up
                 volume_snapshot = iaas_client.create_volume(
                     snapshot_store.size, snapshot_store.id)
