@@ -40,6 +40,15 @@ def main():
             if not snapshot_store:
                 iaas_client.exit('Could not find the snapshot of the persistent volume {}.'
                                  .format(DIRECTORY_PERSISTENT))
+            if landscape == 'Azure':
+                with open(metadata_files_path, 'w') as f:
+                    f.write(json.dumps(
+                        {'snapshotId': snapshot_store.id}))
+
+                # +-> Keep agent metadata
+                if not iaas_client.upload_to_blobstore(metadata_files_path, '{}/{}'.format(backup_guid, metadata_files_name)):
+                    iaas_client.exit(
+                        'Could not upload the tarball {}.'.format(metadata_files_path))
 
             if landscape != 'Aws':
                 # +-> Create a volume from this snapshot whose contents will be backed-up
@@ -162,16 +171,6 @@ def main():
                 with open(metadata_files_path, 'w') as f:
                     f.write(json.dumps(
                         {'snapshotId': snapshot_store_encrypted.id}))
-
-                # +-> Keep agent metadata
-                if not iaas_client.upload_to_blobstore(metadata_files_path, '{}/{}'.format(backup_guid, metadata_files_name)):
-                    iaas_client.exit(
-                        'Could not upload the tarball {}.'.format(metadata_files_path))
-
-            if landscape == 'Azure':
-                with open(metadata_files_path, 'w') as f:
-                    f.write(json.dumps(
-                        {'snapshotId': snapshot_store.id}))
 
                 # +-> Keep agent metadata
                 if not iaas_client.upload_to_blobstore(metadata_files_path, '{}/{}'.format(backup_guid, metadata_files_name)):
