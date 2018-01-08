@@ -33,8 +33,7 @@ def main():
             iaas_client.exit(
                 'Could not find the persistent volume attached to this instance.')
 
-
-        if landscape != 'Aws' and landscape != 'Azure':
+        if landscape != 'Aws' and landscape != 'Azure' and landscape != 'Gcp':
             # +-> Create a volume where the downloaded blobs will be stored on
             volume_downloads = iaas_client.create_volume(
                 volume_persistent.size)
@@ -109,7 +108,7 @@ def main():
                 iaas_client.exit(
                     'Could not delete the download volume with id {}.'.format(volume_downloads.id))
 
-        if landscape == 'Aws' or landscape == 'Azure':
+        if landscape == 'Aws' or landscape == 'Azure' or landscape == 'Gcp':
             # get sanpshot id from service metadata stored in blobstore
             if not iaas_client.download_from_blobstore('{}/{}'.format(backup_guid, metadata_files_name), metadata_files_path):
                 iaas_client.exit(
@@ -165,11 +164,12 @@ def main():
             if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
                 if not iaas_client.copy_directory(
                     '{}/blueprint/files/*'.format(DIRECTORY_DOWNLOADS),
-                    '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
+                        '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
                     iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
-                                 .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
+                                     .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
             else:
-                iaas_client.logger.info('Skipping copy since backup directory was empty')
+                iaas_client.logger.info(
+                    'Skipping copy since backup directory was empty')
             # +-> Start the service job
             iaas_client.start_service_job()
 
