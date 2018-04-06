@@ -34,7 +34,7 @@ def main():
             iaas_client.exit(
                 'Could not find the persistent volume attached to this instance.')
 
-        if landscape == 'Aws' or landscape == 'Azure':
+        if landscape == 'Aws' or landscape == 'Azure' or landscape == 'Gcp':
             try:
                 # get sanpshot id from service metadata stored in blobstore
                 is_snapshot_present = iaas_client.download_from_blobstore(
@@ -124,7 +124,7 @@ def main():
                     iaas_client.exit(
                         'Could not delete the download volume with id {}.'.format(snapshot_volume.id))
 
-        if landscape == 'Openstack' or (landscape == 'Azure' and (not is_snapshot_present)):
+        if landscape != 'Aws' or  (landscape == 'Azure' and (not is_snapshot_present)) and landscape != 'Gcp':
             # +-> Create a volume where the downloaded blobs will be stored on
             volume_downloads = iaas_client.create_volume(
                 volume_persistent.size)
