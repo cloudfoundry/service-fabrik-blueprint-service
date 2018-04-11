@@ -11,8 +11,7 @@ try {
   backuprestore.checkForConfigParameters();
   backuprestore.checkForEnvironmentVariables();
   logger.agent.info('Backup and Restore initializational checks were done successfully.');
-}
-catch (err) {
+} catch (err) {
   logger.agent.error(`Error while trying to perform initializations for backup & restore: '${err}'`);
 }
 
