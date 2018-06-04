@@ -25,6 +25,7 @@ def main():
         tarball_files_path = DIRECTORY_DOWNLOADS + '/' + tarball_files_name
         metadata_files_name = 'blueprint-metadata.json'
         metadata_files_path = '/tmp/' + metadata_files_name
+        is_snapshot_present = False
 
         # +-> Get the id of the persistent volume attached to this instance
         volume_persistent = iaas_client.get_persistent_volume_for_instance(
@@ -33,7 +34,97 @@ def main():
             iaas_client.exit(
                 'Could not find the persistent volume attached to this instance.')
 
-        if landscape != 'Aws' and landscape != 'Azure' and landscape != 'Gcp':
+        if landscape == 'Aws' or landscape == 'Azure' or landscape == 'Gcp':
+            try:
+                # get sanpshot id from service metadata stored in blobstore
+                is_snapshot_present = iaas_client.download_from_blobstore(
+                    '{}/{}'.format(backup_guid, metadata_files_name), metadata_files_path)
+            except Exception as error:
+                iaas_client.logger.error(error)
+                is_snapshot_present = False
+
+            if (not is_snapshot_present) and landscape != 'Azure':
+                iaas_client.exit(
+                    'Could not download the tarball {} for backup guid {} from pseudo-folder.'.format(metadata_files_name, backup_guid))
+            if is_snapshot_present:
+                encrypted_snapshot_id = str(
+                    json.load(open(metadata_files_path))['snapshotId'])
+
+                # +-> Create a volume where the downloaded blobs will be stored on
+                snapshot_volume = iaas_client.create_volume(
+                    volume_persistent.size, encrypted_snapshot_id)
+                if not snapshot_volume:
+                    iaas_client.exit(
+                        'Could not create a volume for the downloads.')
+
+                # +-> Attach the encrypted backup volume to the instance
+                attachment_encrypted_snapshot = iaas_client.create_attachment(
+                    snapshot_volume.id, instance_id)
+                if not attachment_encrypted_snapshot:
+                    iaas_client.exit('Could not attach the download volume with id {} to instance with id {}.'
+                                     .format(snapshot_volume.id, instance_id))
+
+                # +-> Find the mountpoint of the encrypted backup volume
+                mountpoint_encrypted_snapshot = iaas_client.get_mountpoint(
+                    snapshot_volume.id, '1')
+                if not mountpoint_encrypted_snapshot:
+                    iaas_client.exit('Could not determine the mountpoint for the download volume (id: {}).'
+                                     .format(encrypted_snapshot_id))
+
+                # +-> Create temporary directories, mount the encrypted volume to this directory
+                if not iaas_client.delete_directory(DIRECTORY_DOWNLOADS):
+                    iaas_client.exit(
+                        'Could not remove the following directory: {}.'.format(DIRECTORY_DOWNLOADS))
+                if not iaas_client.create_directory(DIRECTORY_DOWNLOADS):
+                    iaas_client.exit(
+                        'Could not create the following directory: {}'.format(DIRECTORY_DOWNLOADS))
+
+                if not iaas_client.mount_device(mountpoint_encrypted_snapshot, DIRECTORY_DOWNLOADS):
+                    iaas_client.exit('Could not mount the device {} to the directory {}.'
+                                     .format(mountpoint_encrypted_snapshot, DIRECTORY_DOWNLOADS))
+
+                iaas_client.stop_service_job()
+                if not iaas_client.wait_for_service_job_status('not monitored'):
+                    iaas_client.exit('Could not stop the service job.')
+
+                # +-> Delete the original contents of the persistant volume
+                if not iaas_client.delete_directory('{}/blueprint/files/*'.format(DIRECTORY_PERSISTENT)):
+                    iaas_client.exit('Could not remove the following directory: {}.'.format(
+                        '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
+                if not iaas_client.create_directory('{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
+                    iaas_client.exit('Could not create the following directory: {}'.format(
+                        '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
+                # +-> Copy the Encrypted backups contents to the persistent volume
+                if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
+                    if not iaas_client.copy_directory(
+                        '{}/blueprint/files/*'.format(DIRECTORY_DOWNLOADS),
+                            '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
+                        iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
+                                         .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
+                else:
+                    iaas_client.logger.info(
+                        'Skipping copy since backup directory was empty')
+                # +-> Start the service job
+                iaas_client.start_service_job()
+
+                # +-> Unmount the volumes and remove the temporary directories
+                if not iaas_client.unmount_device(mountpoint_encrypted_snapshot):
+                    iaas_client.exit('Could not unmount the device {}.'.format(
+                        mountpoint_encrypted_snapshot))
+                if not iaas_client.delete_directory(DIRECTORY_DOWNLOADS):
+                    iaas_client.exit(
+                        'Could not remove the following directory: {}.'.format(DIRECTORY_DOWNLOADS))
+
+                # +-> Detach the download volume from the instance
+                if not iaas_client.delete_attachment(attachment_encrypted_snapshot.volume_id, instance_id):
+                    iaas_client.exit('Could not detach the download volume with id {} to instance with id {}.'
+                                     .format(attachment_encrypted_snapshot.volume_id, instance_id))
+
+                if not iaas_client.delete_volume(snapshot_volume.id):
+                    iaas_client.exit(
+                        'Could not delete the download volume with id {}.'.format(snapshot_volume.id))
+
+        if landscape != 'Aws' or  (landscape == 'Azure' and (not is_snapshot_present)) and landscape != 'Gcp':
             # +-> Create a volume where the downloaded blobs will be stored on
             volume_downloads = iaas_client.create_volume(
                 volume_persistent.size)
@@ -107,88 +198,6 @@ def main():
             if not iaas_client.delete_volume(volume_downloads.id):
                 iaas_client.exit(
                     'Could not delete the download volume with id {}.'.format(volume_downloads.id))
-
-        if landscape == 'Aws' or landscape == 'Azure' or landscape == 'Gcp':
-            # get sanpshot id from service metadata stored in blobstore
-            if not iaas_client.download_from_blobstore('{}/{}'.format(backup_guid, metadata_files_name), metadata_files_path):
-                iaas_client.exit(
-                    'Could not download the tarball {} for backup guid {} from pseudo-folder.'.format(metadata_files_name, backup_guid))
-            encrypted_snapshot_id = str(
-                json.load(open(metadata_files_path))['snapshotId'])
-
-            # +-> Create a volume where the downloaded blobs will be stored on
-            snapshot_volume = iaas_client.create_volume(
-                volume_persistent.size, encrypted_snapshot_id)
-            if not snapshot_volume:
-                iaas_client.exit(
-                    'Could not create a volume for the downloads.')
-
-            # +-> Attach the encrypted backup volume to the instance
-            attachment_encrypted_snapshot = iaas_client.create_attachment(
-                snapshot_volume.id, instance_id)
-            if not attachment_encrypted_snapshot:
-                iaas_client.exit('Could not attach the download volume with id {} to instance with id {}.'
-                                 .format(snapshot_volume.id, instance_id))
-
-            # +-> Find the mountpoint of the encrypted backup volume
-            mountpoint_encrypted_snapshot = iaas_client.get_mountpoint(
-                snapshot_volume.id, '1')
-            if not mountpoint_encrypted_snapshot:
-                iaas_client.exit('Could not determine the mountpoint for the download volume (id: {}).'
-                                 .format(encrypted_snapshot_id))
-
-            # +-> Create temporary directories, mount the encrypted volume to this directory
-            if not iaas_client.delete_directory(DIRECTORY_DOWNLOADS):
-                iaas_client.exit(
-                    'Could not remove the following directory: {}.'.format(DIRECTORY_DOWNLOADS))
-            if not iaas_client.create_directory(DIRECTORY_DOWNLOADS):
-                iaas_client.exit(
-                    'Could not create the following directory: {}'.format(DIRECTORY_DOWNLOADS))
-
-            if not iaas_client.mount_device(mountpoint_encrypted_snapshot, DIRECTORY_DOWNLOADS):
-                iaas_client.exit('Could not mount the device {} to the directory {}.'
-                                 .format(mountpoint_encrypted_snapshot, DIRECTORY_DOWNLOADS))
-
-            iaas_client.stop_service_job()
-            if not iaas_client.wait_for_service_job_status('not monitored'):
-                iaas_client.exit('Could not stop the service job.')
-
-            # +-> Delete the original contents of the persistant volume
-            if not iaas_client.delete_directory('{}/blueprint/files/*'.format(DIRECTORY_PERSISTENT)):
-                iaas_client.exit('Could not remove the following directory: {}.'.format(
-                    '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
-            if not iaas_client.create_directory('{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
-                iaas_client.exit('Could not create the following directory: {}'.format(
-                    '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)))
-            # +-> Copy the Encrypted backups contents to the persistent volume
-            if os.listdir('{}/blueprint/files/'.format(DIRECTORY_DOWNLOADS)) != []:
-                if not iaas_client.copy_directory(
-                    '{}/blueprint/files/*'.format(DIRECTORY_DOWNLOADS),
-                        '{}/blueprint/files'.format(DIRECTORY_PERSISTENT)):
-                    iaas_client.exit('Could not copy from {}/{} to the persistent volume.'
-                                     .format(DIRECTORY_DOWNLOADS, DIRECTORY_PERSISTENT))
-            else:
-                iaas_client.logger.info(
-                    'Skipping copy since backup directory was empty')
-            # +-> Start the service job
-            iaas_client.start_service_job()
-
-            # +-> Unmount the volumes and remove the temporary directories
-            if not iaas_client.unmount_device(mountpoint_encrypted_snapshot):
-                iaas_client.exit('Could not unmount the device {}.'.format(
-                    mountpoint_encrypted_snapshot))
-            if not iaas_client.delete_directory(DIRECTORY_DOWNLOADS):
-                iaas_client.exit(
-                    'Could not remove the following directory: {}.'.format(DIRECTORY_DOWNLOADS))
-
-            # +-> Detach the download volume from the instance
-            if not iaas_client.delete_attachment(attachment_encrypted_snapshot.volume_id, instance_id):
-                iaas_client.exit('Could not detach the download volume with id {} to instance with id {}.'
-                                 .format(attachment_encrypted_snapshot.volume_id, instance_id))
-
-            if not iaas_client.delete_volume(snapshot_volume.id):
-                iaas_client.exit(
-                    'Could not delete the download volume with id {}.'.format(snapshot_volume.id))
 
         # +-> Wait for the service job to be running again
         if not iaas_client.wait_for_service_job_status('running'):
