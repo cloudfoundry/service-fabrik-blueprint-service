@@ -41,7 +41,7 @@ def main():
                 iaas_client.exit('Could not find the snapshot of the persistent volume {}.'
                                  .format(DIRECTORY_PERSISTENT))
 
-            if landscape != 'Aws' and landscape != 'Azure':
+            if landscape != 'Aws' and landscape != 'Azure' and landscape != 'Gcp':
                 # +-> Create a volume from this snapshot whose contents will be backed-up
                 volume_snapshot = iaas_client.create_volume(
                     snapshot_store.size, snapshot_store.id)
@@ -168,7 +168,7 @@ def main():
                     iaas_client.exit(
                         'Could not upload the tarball {}.'.format(metadata_files_path))
 
-            if landscape == 'Azure':
+            if landscape == 'Azure' or landscape == 'Gcp':
                 with open(metadata_files_path, 'w') as f:
                     f.write(json.dumps(
                         {'snapshotId': snapshot_store.id}))
@@ -179,7 +179,7 @@ def main():
                         'Could not upload the tarball {}.'.format(metadata_files_path))
 
             # +-> Delete the snapshot of the persistent volume
-            if landscape != 'Azure' and not iaas_client.delete_snapshot(snapshot_store.id):
+            if landscape != 'Azure' and landscape != 'Gcp' and not iaas_client.delete_snapshot(snapshot_store.id):
                 iaas_client.exit(
                     'Could not delete the snapshot with id {}.'.format(snapshot_store.id))
 
@@ -187,7 +187,7 @@ def main():
             # +-> Stop the service job
             iaas_client.stop_service_job()
 
-            if landscape != 'Aws' and landscape != 'Azure':
+            if landscape != 'Aws' and landscape != 'Azure' and landscape != 'Gcp':
                 # +-> Create a volume where the encrypted tarballs/files will be stored on (to be uploaded)
                 volume_uploads = iaas_client.create_volume(
                     volume_persistent.size)
@@ -257,7 +257,7 @@ def main():
                     iaas_client.exit(
                         'Could not delete the upload volume with id {}.'.format(volume_uploads.id))
 
-            if landscape == 'Aws' or landscape == 'Azure':
+            if landscape == 'Aws' or landscape == 'Azure' or landscape == 'Gcp':
                 snapshot_store = None
                 if landscape == 'Aws':
                     # +-> Copy Snapshot Function to encrypt the Snapshot
@@ -266,7 +266,7 @@ def main():
                     if not snapshot_store:
                         iaas_client.exit('Could not create the encrypted copy of the snapshot {}.'
                                          .format(DIRECTORY_PERSISTENT))
-                if landscape == 'Azure':
+                if landscape == 'Azure' or landscape == 'Gcp':
                     # +-> Create a snapshot of the persistent volume
                     snapshot_store = iaas_client.create_snapshot(
                         volume_persistent.id)
