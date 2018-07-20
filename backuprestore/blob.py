@@ -6,6 +6,9 @@ from service_fabrik_backup_restore import parse_options, create_iaas_client
 def main():
     # +-> Definition of constants
     # these locations are given for reference purposes. The dev can edit them, as per requirement
+    DIRECTORY_PERSISTENT = '/var/vcap/store'
+    DIRECTORY_SNAPSHOT = '/tmp/service-fabrik-backup/snapshot'
+    DIRECTORY_UPLOADS = '/tmp/service-fabrik-backup/uploads'
     UPLOAD_SOURCE = '/var/vcap/store/myfiles.tar.gz'
     UPLOAD_DESTINATION = 'myfiles.tar.gz'
     DOWNLOAD_SOURCE = 'myfiles.tar.gz'
