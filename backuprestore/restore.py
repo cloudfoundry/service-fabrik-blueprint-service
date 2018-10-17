@@ -122,6 +122,9 @@ def main():
             if not snapshot_volume:
                 iaas_client.exit(
                     'Could not create a volume for the downloads.')
+            
+            restore_metadata = { 'vm_cid': instance_id, 'volume_id': snapshot_volume.id }
+            iaas_client.last_operation('BOSH_ATTACH_INIT', 'processing', restore_metadata)
 
             # +-> Attach the encrypted backup volume to the instance
             attachment_encrypted_snapshot = iaas_client.create_attachment(
