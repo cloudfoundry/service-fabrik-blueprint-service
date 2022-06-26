@@ -2,7 +2,7 @@
 
 ## Overview
 
-This service is a sample to demonstrate how services are integrated into the [Service-Fabrik-Broker](https://github.com/SAP/service-fabrik-broker).
+This service is a sample to demonstrate how services are integrated into the [Service-Fabrik-Broker](https://github.com/cloudfoundry/service-fabrik-broker).
 
 As part of the decoupling process in which the services get more and more separated from the broker itself, the Blueprint-Service serves as sample for the service teams to answer questions how to integrate a service into the broker.
 
@@ -15,7 +15,7 @@ As part of the decoupling process in which the services get more and more separa
 - Clone the repository:
 
 ```
-git clone https://github.com/SAP/service-fabrik-blueprint-service.git
+git clone https://github.com/cloudfoundry/service-fabrik-blueprint-service.git
 cd service-fabrik-blueprint-service
 npm install
 ```
@@ -28,7 +28,7 @@ npm start
 
 ## How to Obtain Support
 
- If you need any support, have any question or have found a bug, please report it in the [GitHub bug tracking system](https://github.com/SAP/service-fabrik-blueprint-service/issues). We shall get back to you.
+ If you need any support, have any question or have found a bug, please report it in the [GitHub bug tracking system](https://github.com/cloudfoundry/service-fabrik-blueprint-service/issues). We shall get back to you.
 
 ## LICENSE
 
